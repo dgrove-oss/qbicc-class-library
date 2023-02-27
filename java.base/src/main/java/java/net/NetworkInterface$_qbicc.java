@@ -73,6 +73,10 @@ class NetworkInterface$_qbicc {
         netif next;
     }
 
+    private static void debug(String msg, ptr<struct_sockaddr_in> sa) {
+        System.out.println(msg + " " + Long.toHexString(sa.longValue()) + " = " + Integer.toHexString(sa.sel().sin_addr.s_addr.intValue()));
+    }
+
     /*
      * Frees the malloced struct_sockaddrs and char_ptrs for an interface list (including any attached addresses).
      */
@@ -126,7 +130,10 @@ class NetworkInterface$_qbicc {
             if (addrP.brdcast.isNull()) {
                 return ifs; // match OpenJDK behavior: if malloc fails just return the unmodified netif
             }
+            debug("  addIf preCopy, broadaddrP", ifr_broadaddrP.cast());
             memcpy(addrP.brdcast.cast(), ifr_broadaddrP.cast(), addr_size);
+            debug("  addIf postCopy, broadaddrP", ifr_broadaddrP.cast());
+            debug("  addIf postCopy, addrP", addrP.brdcast.cast());
         } else {
             addrP.brdcast = word(0);
         }
@@ -223,7 +230,10 @@ class NetworkInterface$_qbicc {
                 if (tmpaddr.brdcast.isNull()) {
                     return ifs;// match OpenJDK behavior: if malloc fails bailout
                 }
+                debug("  addIf - virtual preCopy, addrP.brdcast", addrP.brdcast.cast());
                 memcpy(tmpaddr.brdcast.cast(), addrP.brdcast.cast(), addr_size);
+                debug("  addIf - virtual postCopy, addrP.brdcast", addrP.brdcast.cast());
+                debug("  addIf - virtual postCopy, tmpaddr.brdcast", tmpaddr.brdcast.cast());
             }
 
             tmpaddr.next = currif.addr;
@@ -302,6 +312,7 @@ class NetworkInterface$_qbicc {
                         if (ioctl(sock, SIOCGIFBRDADDR, ifreqP).intValue() == 0) {
                             memcpy(addr_of(broadaddr).cast(), addr_of(ifreqP.sel().ifr_ifru).cast(), sizeof(struct_sockaddr.class));
                             broadaddrP = addr_of(broadaddr);
+                            debug("ioctl broadaddr is ", broadaddrP.cast());
                         }
                     }
 
@@ -314,7 +325,13 @@ class NetworkInterface$_qbicc {
                     }
 
                     // add interface to the list
+                    if (!broadaddrP.isNull()) {
+                        debug("before addif broadaddr is ", broadaddrP.cast());
+                    }
                     ifs = addif(sock, addr_of(ifreqP.sel().ifr_name[0]), ifs, addr_of(addr), broadaddrP, AF_INET, prefix);
+                    if (!broadaddrP.isNull()) {
+                        debug("after addif broadaddr is ", broadaddrP.cast());
+                    }
                 }
             } finally {
                 free(buf);
@@ -341,8 +358,14 @@ class NetworkInterface$_qbicc {
                         broadaddrP = ifa.sel().ifa_dstaddr;
                     }
 
+                    if (!broadaddrP.isNull()) {
+                        debug("before addif broadaddr is ", broadaddrP.cast());
+                    }
                     ifs = addif(sock, ifa.sel().ifa_name.cast(), ifs, ifa.sel().ifa_addr,
                             broadaddrP, AF_INET, translateIPv4AddressToPrefix(ifa.sel().ifa_netmask.cast()));
+                    if (!broadaddrP.isNull()) {
+                        debug("after addif broadaddr is ", broadaddrP.cast());
+                    }
                 }
             } finally {
                 freeifaddrs(origifa);
