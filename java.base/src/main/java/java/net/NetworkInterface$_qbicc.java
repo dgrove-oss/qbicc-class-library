@@ -96,12 +96,13 @@ class NetworkInterface$_qbicc {
         }
     }
 
+    static void makeItOpaque(ptr<struct_sockaddr> dummy) {
+    }
+
     static netif addif(c_int sock, const_char_ptr if_name, netif ifs,
                        ptr<struct_sockaddr> ifr_addrP, ptr<struct_sockaddr> ifr_broadaddrP,
                        c_int family, c_short prefix) {
-        if (!ifr_broadaddrP.isNull()) {
-            debug("entering addif", ifr_broadaddrP.cast());
-        }
+        makeItOpaque(ifr_broadaddrP.cast());
         netif currif = ifs;
         c_char[] name = new c_char[IF_NAMESIZE.intValue()];
         c_char[] vname = new c_char[IF_NAMESIZE.intValue()];
