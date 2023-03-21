@@ -386,7 +386,7 @@ class UnixNativeDispatcher$_native {
 
     static long opendir0(long pathAddress) throws UnixException {
         const_char_ptr path = word(pathAddress);
-        DIR_ptr dir = opendir(path);
+        ptr<DIR> dir = opendir(path);
         if (dir.isNull()) {
             throw new UnixException(errno);
         }
@@ -394,7 +394,7 @@ class UnixNativeDispatcher$_native {
     }
 
     static long fdopendir(int dfd) throws UnixException {
-        DIR_ptr dir = jdk.internal.sys.posix.Dirent.fdopendir(word(dfd));
+        ptr<DIR> dir = jdk.internal.sys.posix.Dirent.fdopendir(word(dfd));
         if (dir.isNull()) {
             throw new UnixException(errno);
         }
@@ -402,7 +402,7 @@ class UnixNativeDispatcher$_native {
     }
 
     static void closedir(long jdir) throws UnixException {
-        DIR_ptr dir = word(jdir);
+        ptr<DIR> dir = word(jdir);
         c_int rc = jdk.internal.sys.posix.Dirent.closedir(dir);
         if (rc == word(-1) && errno != EINTR.intValue()) {
             throw new UnixException(errno);
@@ -410,10 +410,10 @@ class UnixNativeDispatcher$_native {
     }
 
     static byte[] readdir(long jdir) throws UnixException {
-        DIR_ptr dir = word(jdir);
+        ptr<DIR> dir = word(jdir);
 
         errno = 0;
-        struct_dirent_ptr dirent = auto(jdk.internal.sys.posix.Dirent.readdir(dir));
+        ptr<struct_dirent> dirent = auto(jdk.internal.sys.posix.Dirent.readdir(dir));
         if (dirent.isNull()) {
             if (errno != 0) {
                 throw new UnixException(errno);

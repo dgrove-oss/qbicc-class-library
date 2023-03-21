@@ -41,7 +41,7 @@ public final class SysSocket {
     public static final class struct_msghdr extends object {
         public void_ptr msg_name;
         public socklen_t msg_namelen;
-        public struct_iovec_ptr msg_iov;
+        public ptr<struct_iovec> msg_iov;
         public c_int msg_iovlen;
         public void_ptr msg_control;
         public socklen_t msg_controllen;
