@@ -233,7 +233,7 @@ class NetworkInterface$_qbicc {
         return ifs;
     }
 
-    private static c_short translateIPv4AddressToPrefix(struct_sockaddr_in_ptr addr) {
+    private static c_short translateIPv4AddressToPrefix(ptr<struct_sockaddr_in> addr) {
         if (addr.isNull()) {
             return word(0);
         }
@@ -279,7 +279,7 @@ class NetworkInterface$_qbicc {
                 }
 
                 // iterate through each interface
-                struct_ifreq_ptr ifreqP = ifc.ifc_ifcu.cast(struct_ifreq_ptr.class);
+                ptr<struct_ifreq> ifreqP = ifc.ifc_ifcu.cast();
                 for (int i = 0; i < ifc.ifc_len.intValue() / sizeof(struct_ifreq.class).intValue(); i++, ifreqP = ifreqP.plus(1)) {
                     struct_sockaddr addr = auto();
                     struct_sockaddr broadaddr = auto();
@@ -310,7 +310,7 @@ class NetworkInterface$_qbicc {
 
                     // determine netmask
                     if (ioctl(sock, SIOCGIFNETMASK, ifreqP).intValue() == 0) {
-                        prefix = translateIPv4AddressToPrefix(addr_of(ifreqP.sel().ifr_ifru).cast(struct_sockaddr_in_ptr.class));
+                        prefix = translateIPv4AddressToPrefix(addr_of(ifreqP.sel().ifr_ifru).cast());
                     }
 
                     // add interface to the list
@@ -414,13 +414,15 @@ class NetworkInterface$_qbicc {
             InetAddress iaObj = null;
             if (addrP.family == AF_INET) {
                 iaObj = new Inet4Address();
-                unsigned_int tmpAddr = htonl(addrP.addr.cast(struct_sockaddr_in_ptr.class).sel().sin_addr.s_addr.cast()).cast();
+                ptr<struct_sockaddr_in> addr4 = addrP.addr.cast();
+                unsigned_int tmpAddr = htonl(deref(addr4).sin_addr.s_addr.cast()).cast();
                 iaObj.holder().address = tmpAddr.intValue();
                 InterfaceAddress ibObj = new InterfaceAddress();
                 ((InterfaceAddress$_patch)(Object)ibObj).address = iaObj;
                 if (!addrP.brdcast.isNull()) {
                     Inet4Address ia2Obj = new Inet4Address();
-                    unsigned_int tmpBAddr = htonl(addrP.brdcast.cast(struct_sockaddr_in_ptr.class).sel().sin_addr.s_addr.cast()).cast();
+                    ptr<struct_sockaddr_in> brdcast4 = addrP.brdcast.cast();
+                    unsigned_int tmpBAddr = htonl(deref(brdcast4).sin_addr.s_addr.cast()).cast();
                     ia2Obj.holder().address = tmpBAddr.intValue();
                     ((InterfaceAddress$_patch)(Object)ibObj).broadcast = ia2Obj;
                 }
@@ -430,9 +432,10 @@ class NetworkInterface$_qbicc {
             if (addrP.family == AF_INET6) {
                 iaObj = new Inet6Address();
                 Inet6Address$_patch ia6Obj = (Inet6Address$_patch)(Object)iaObj;
-                ptr<uint8_t> addr = addr_of(addr_of(addrP.addr.cast(struct_sockaddr_in6_ptr.class).sel().sin6_addr).sel().s6_addr[0]);
+                ptr<struct_sockaddr_in6> addr6 = addrP.addr.cast();
+                ptr<uint8_t> addr = addr_of(addr_of(addr6.sel().sin6_addr).sel().s6_addr[0]);
                 ia6Obj.setInet6Address_ipaddress(addr);
-                uint32_t scope = addrP.addr.cast(struct_sockaddr_in6_ptr.class).sel().sin6_scope_id.cast();
+                uint32_t scope = addr6.sel().sin6_scope_id.cast();
                 if (scope.intValue() != 0) {
                     ia6Obj.setInet6Address_scopeid(scope.intValue());
                     ia6Obj.setInet6Address_scope_ifname((NetworkInterface)(Object)netifObj);
